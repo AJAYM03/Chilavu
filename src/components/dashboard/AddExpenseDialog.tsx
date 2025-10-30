@@ -53,7 +53,7 @@ export const AddExpenseDialog = ({ open, onOpenChange }: AddExpenseDialogProps) 
   }, [title, categoryName]);
 
   useEffect(() => {
-    if (!title || isIncome || aiSuggested || categoryName) return;
+    if (!title || isIncome || aiSuggested) return;
 
     const timer = setTimeout(async () => {
       try {
