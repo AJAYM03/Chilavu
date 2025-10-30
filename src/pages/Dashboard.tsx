@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { PeriodFilters } from "@/components/dashboard/PeriodFilters";
 import { MetricsCards } from "@/components/dashboard/MetricsCards";
@@ -56,26 +57,39 @@ const Dashboard = () => {
           setSelectedDate={setSelectedDate}
         />
 
-        <MetricsCards dateRange={dateRange} />
+        <Tabs defaultValue="overview" className="w-full">
+          <TabsList className="w-full justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          </TabsList>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <IncomeVsExpenseChart dateRange={dateRange} period={period} />
-          <NetBalanceChart dateRange={dateRange} period={period} />
-        </div>
+          <TabsContent value="overview" className="space-y-6 mt-6">
+            <MetricsCards dateRange={dateRange} />
+            <BudgetGoal />
+          </TabsContent>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ImpulseSpendingChart dateRange={dateRange} />
-          <CategoryBudgetChart dateRange={dateRange} />
-        </div>
+          <TabsContent value="charts" className="space-y-6 mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <IncomeVsExpenseChart dateRange={dateRange} period={period} />
+              <NetBalanceChart dateRange={dateRange} period={period} />
+            </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SpendingChart dateRange={dateRange} />
-          <SpendingTrendChart dateRange={dateRange} period={period} />
-        </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <ImpulseSpendingChart dateRange={dateRange} />
+              <CategoryBudgetChart dateRange={dateRange} />
+            </div>
 
-        <BudgetGoal />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SpendingChart dateRange={dateRange} />
+              <SpendingTrendChart dateRange={dateRange} period={period} />
+            </div>
+          </TabsContent>
 
-        <ExpenseList dateRange={dateRange} />
+          <TabsContent value="transactions" className="mt-6">
+            <ExpenseList dateRange={dateRange} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Button
