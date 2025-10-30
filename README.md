@@ -1,73 +1,88 @@
-# Welcome to your Lovable project
+# ചിലവ് (Chilavu) - Expense Tracker for Students
 
-## Project info
+ചിലവ് (Chilavu) is a minimalist finance tracker application specifically designed for college students to manage their expenses and income effectively. Built with modern web technologies, it offers a clean interface and insightful visualizations to help students stay on top of their finances.
 
-**URL**: https://lovable.dev/projects/cfe4abc7-bf63-4fc9-a47b-42453fa142c9
+## Features
 
-## How can I edit this code?
+* **Authentication**: Secure user sign-up and sign-in functionality.
+* **Transaction Management**: Add, edit, and delete income and expense transactions.
+* **Categorization**: Organize transactions into custom categories. Includes default student-friendly categories and AI-powered category suggestions based on transaction titles.
+* **Budgeting**:
+    * Set overall monthly spending goals.
+    * Define budgets for specific categories.
+    * Track progress against category budgets.
+* **Impulse Purchase Tracking**: Mark expenses as impulse buys and visualize the impact.
+* **Recurring Transactions**: Set up recurring income or expenses (weekly/monthly).
+* **Dashboard Overview**:
+    * View key metrics like total spent, total income, net balance, average daily spend, and impulse spending totals.
+    * Track monthly budget goal progress.
+    * Filter data by daily, weekly, or monthly periods.
+* **Data Visualization**: Interactive charts powered by Recharts:
+    * Income vs Expense Trend
+    * Net Balance Trend
+    * Impulse vs Planned Spending
+    * Category Budget Progress
+    * Spending Breakdown by Category
+    * Spending Trend (Bar Chart)
+* **Reporting**: View reports like Top 5 Spending Categories for selected periods.
+* **Settings**: Manage monthly budget goals, category budgets, and add default categories.
+* **Data Export**: Export transaction data to CSV.
+* **Security**: Includes a check for leaked passwords during sign-up using the Pwned Passwords API via a Supabase Edge Function.
+* **Theme**: Supports Light and Dark modes.
+* **Responsive Design**: User interface adapted for desktop and mobile devices.
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+* **Frontend**: React, TypeScript, Vite
+* **UI Library**: shadcn/ui
+* **Styling**: Tailwind CSS
+* **State Management**: React Context API, TanStack Query (for server state)
+* **Routing**: React Router
+* **Charts**: Recharts
+* **Backend**: Supabase
+    * Authentication
+    * PostgreSQL Database
+    * Edge Functions (Deno)
+* **UI Components**: Built using Radix UI primitives via shadcn/ui
+* **Form Handling**: React Hook Form
+* **Notifications**: Sonner
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/cfe4abc7-bf63-4fc9-a47b-42453fa142c9) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+* Node.js (>=18.0.0 recommended)
+* npm or yarn or pnpm
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation & Setup
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1.  **Clone the repository:**
+    ```bash
+    git clone <YOUR_REPOSITORY_URL>
+    cd chilavu
+    ```
 
-Follow these steps:
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    # or
+    # yarn install
+    # or
+    # pnpm install
+    ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3.  **Set up Supabase:**
+    * Create a Supabase project at [supabase.com](https://supabase.com/).
+    * In your Supabase project dashboard, go to the SQL Editor and run the SQL scripts found in the `supabase/migrations/` directory to set up the necessary tables and functions.
+    * Get your Supabase Project URL and Anon Key from Project Settings > API.
+    * Create a `.env` file in the root of the project and add your Supabase credentials:
+        ```env
+        VITE_SUPABASE_URL="YOUR_SUPABASE_URL"
+        VITE_SUPABASE_PUBLISHABLE_KEY="YOUR_SUPABASE_ANON_KEY"
+        ```
+    * (Optional but Recommended) Deploy the Supabase Edge Functions located in `supabase/functions/` using the Supabase CLI. You might need to set environment variables like `LOVABLE_API_KEY` for the `suggest-category` function and `SUPABASE_SERVICE_ROLE_KEY` for the recurring transaction functions within your Supabase project settings. Update `supabase/config.toml` if necessary.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Running Locally
 
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/cfe4abc7-bf63-4fc9-a47b-42453fa142c9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
