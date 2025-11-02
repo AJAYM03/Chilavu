@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
@@ -73,41 +73,81 @@ export const IncomeVsExpenseChart = ({ dateRange, period }: IncomeVsExpenseChart
   const data = chartData();
   const hasData = data.some(d => d.income > 0 || d.expense > 0);
 
+  const totalIncome = data.reduce((sum, d) => sum + d.income, 0);
+  const totalExpense = data.reduce((sum, d) => sum + d.expense, 0);
+  const netSavings = totalIncome - totalExpense;
+
   return (
-    <Card className="animate-fade-in">
+    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
       <CardHeader>
         <CardTitle>Income vs Expense Trend</CardTitle>
+        <CardDescription>
+          Net: <span className={`font-bold ${netSavings >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+            ₹{netSavings.toFixed(2)}
+          </span>
+          {" • "}
+          Income: <span className="font-semibold text-green-600 dark:text-green-400">₹{totalIncome.toFixed(2)}</span>
+          {" • "}
+          Expense: <span className="font-semibold text-destructive">₹{totalExpense.toFixed(2)}</span>
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {hasData ? (
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="date" className="text-xs" />
-              <YAxis className="text-xs" />
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="incomeGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.1} />
+                </linearGradient>
+                <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="hsl(var(--destructive))" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="hsl(var(--destructive))" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" opacity={0.3} />
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 12 }}
+                tickLine={false}
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                tickLine={false}
+                tickFormatter={(value) => `₹${value}`}
+              />
               <Tooltip 
                 contentStyle={{ 
                   backgroundColor: "hsl(var(--card))",
                   border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)"
+                  borderRadius: "var(--radius)",
+                  boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
                 }}
+                formatter={(value: number) => `₹${value.toFixed(2)}`}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ paddingTop: "10px" }}
+                iconType="line"
+              />
               <Line 
                 type="monotone" 
                 dataKey="income" 
-                stroke="hsl(var(--accent))" 
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--accent))" }}
+                stroke="hsl(142, 76%, 36%)" 
+                strokeWidth={3}
+                dot={{ fill: "hsl(142, 76%, 36%)", r: 5, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                activeDot={{ r: 7 }}
                 name="Income"
+                animationDuration={800}
               />
               <Line 
                 type="monotone" 
                 dataKey="expense" 
                 stroke="hsl(var(--destructive))" 
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--destructive))" }}
+                strokeWidth={3}
+                dot={{ fill: "hsl(var(--destructive))", r: 5, strokeWidth: 2, stroke: "hsl(var(--background))" }}
+                activeDot={{ r: 7 }}
                 name="Expense"
+                animationDuration={800}
               />
             </LineChart>
           </ResponsiveContainer>
