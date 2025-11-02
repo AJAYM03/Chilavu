@@ -5,26 +5,36 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 
 export const BudgetGoal = () => {
-  const currentMonthYear = format(new Date(), "yyyy-MM");
+  const currentDate = new Date();
+  const currentMonthYear = format(currentDate, "yyyy-MM");
 
   const { data: budgetData } = useQuery({
     queryKey: ["budget-goal", currentMonthYear],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return { budgetAmount: 0, spent: 0 };
+      }
+
       const { data: budget } = await supabase
         .from("budget_goals")
         .select("*")
         .eq("month_year", currentMonthYear)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      const startOfMonth = format(new Date(), "yyyy-MM-01");
-      const endOfMonth = format(new Date(), "yyyy-MM-31");
+      // Calculate correct start and end of month
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
       const { data: expenses } = await supabase
         .from("expenses")
         .select("amount")
+        .eq("user_id", user.id)
         .eq("is_income", false)
-        .gte("date", startOfMonth)
-        .lte("date", endOfMonth);
+        .gte("date", format(startOfMonth, "yyyy-MM-dd"))
+        .lte("date", format(endOfMonth, "yyyy-MM-dd"));
 
       const totalSpent = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
