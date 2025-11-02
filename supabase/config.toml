@@ -6,8 +6,5 @@ verify_jwt = false
 [functions.suggest-category]
 verify_jwt = true
 
-[functions.generate-recurring]
-verify_jwt = false
-
 [functions.generate-recurring-transactions]
 verify_jwt = false

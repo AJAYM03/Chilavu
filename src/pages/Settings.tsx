@@ -83,8 +83,8 @@ const Settings = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["budget-goal"] });
-      queryClient.invalidateQueries({ queryKey: ["budget-goal-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["budget-goal-settings", currentMonthYear] });
+      queryClient.invalidateQueries({ queryKey: ["budget-goal", currentMonthYear] });
       toast.success("Budget goal saved successfully");
     },
     onError: () => {
