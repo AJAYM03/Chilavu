@@ -99,8 +99,11 @@ export const EditExpenseDialog = ({ expense, open, onOpenChange }: EditExpenseDi
       return;
     }
 
+    // Fix: Ensure amount is positive
+    const finalAmount = Math.abs(parseFloat(amount));
+
     updateMutation.mutate({
-      amount: parseFloat(amount),
+      amount: finalAmount,
       title,
       date: format(date, "yyyy-MM-dd"),
       is_income: isIncome,
@@ -125,6 +128,7 @@ export const EditExpenseDialog = ({ expense, open, onOpenChange }: EditExpenseDi
               id="edit-amount"
               type="number"
               step="0.01"
+              min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
