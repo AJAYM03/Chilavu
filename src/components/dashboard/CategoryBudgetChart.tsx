@@ -11,7 +11,7 @@ interface CategoryBudgetChartProps {
 }
 
 export const CategoryBudgetChart = ({ dateRange }: CategoryBudgetChartProps) => {
-  const currentMonthYear = format(new Date(), "yyyy-MM");
+  const currentMonthYear = format(new Date(dateRange.start), "yyyy-MM");
 
   const { data: categoryBudgets } = useQuery({
     queryKey: ["category-budgets-chart", currentMonthYear],

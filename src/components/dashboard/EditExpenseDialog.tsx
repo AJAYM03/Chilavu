@@ -65,10 +65,24 @@ export const EditExpenseDialog = ({ expense, open, onOpenChange }: EditExpenseDi
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["metrics"] });
-      queryClient.invalidateQueries({ queryKey: ["spending-chart"] });
-      queryClient.invalidateQueries({ queryKey: ["spending-trend"] });
+      const keysToInvalidate = [
+        "expenses",
+        "metrics",
+        "spending-chart",
+        "spending-trend",
+        "expenses-trend",
+        "expenses-balance",
+        "expenses-impulse",
+        "expenses-by-category",
+        "category-budgets-chart",
+        "budget-goal",
+        "top-categories"
+      ];
+      
+      keysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
+
       toast.success("Transaction updated successfully");
       onOpenChange(false);
     },

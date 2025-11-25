@@ -66,7 +66,7 @@ const Dashboard = () => {
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             <MetricsCards dateRange={dateRange} />
-            <BudgetGoal />
+            <BudgetGoal dateRange={dateRange} />
           </TabsContent>
 
           <TabsContent value="charts" className="space-y-6 mt-6">

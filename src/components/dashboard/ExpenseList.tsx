@@ -40,10 +40,24 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["expenses"] });
-      queryClient.invalidateQueries({ queryKey: ["metrics"] });
-      queryClient.invalidateQueries({ queryKey: ["spending-chart"] });
-      queryClient.invalidateQueries({ queryKey: ["spending-trend"] });
+      const keysToInvalidate = [
+        "expenses",
+        "metrics",
+        "spending-chart",
+        "spending-trend",
+        "expenses-trend",
+        "expenses-balance",
+        "expenses-impulse",
+        "expenses-by-category",
+        "category-budgets-chart",
+        "budget-goal",
+        "top-categories"
+      ];
+      
+      keysToInvalidate.forEach(key => {
+        queryClient.invalidateQueries({ queryKey: [key] });
+      });
+      
       toast.success("Expense deleted successfully");
       setDeletingExpenseId(null);
     },
@@ -81,6 +95,7 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
     a.href = url;
     a.download = `expenses-${dateRange.start}-${dateRange.end}.csv`;
     a.click();
+    window.URL.revokeObjectURL(url);
     toast.success("Exported to CSV");
   };
 
