@@ -9,9 +9,12 @@ interface BudgetGoalProps {
 }
 
 export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
-  // FIX: Use parseISO to correctly handle the date string in local time.
-  // This prevents "2024-11-01" from shifting back to "2024-10-31" due to timezone offsets.
+  // FIX: Use parseISO to strictly interpret the date string as local time.
+  // 'new Date("2024-11-01")' defaults to UTC, which can shift to 'Oct 31' in many timezones.
+  // This shift causes the app to fetch data for the previous month instead of the current one.
   const selectedDate = parseISO(dateRange.start);
+  
+  // Format as "yyyy-MM" to match the database column for budget goals
   const currentMonthYear = format(selectedDate, "yyyy-MM");
 
   const { data: budgetData } = useQuery({
@@ -23,7 +26,7 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
         return { budgetAmount: 0, spent: 0 };
       }
 
-      // Fetch the goal specifically for the selected month
+      // 1. Fetch the budget goal for the CORRECTLY identified month
       const { data: budget } = await supabase
         .from("budget_goals")
         .select("*")
@@ -31,10 +34,11 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Calculate the full date range for the selected month to aggregate total expenses
+      // 2. Calculate the exact start and end of the selected month
       const monthStart = startOfMonth(selectedDate);
       const monthEnd = endOfMonth(selectedDate);
 
+      // 3. Fetch expenses specifically for this calculated month range
       const { data: expenses } = await supabase
         .from("expenses")
         .select("amount")
@@ -52,12 +56,12 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
     },
   });
 
-  // Calculate percentage, capping visual progress at 100%
+  // Calculate percentage for the progress bar (clamped at 100%)
   const percentage = budgetData?.budgetAmount
     ? Math.min((budgetData.spent / budgetData.budgetAmount) * 100, 100)
     : 0;
 
-  // Calculate raw percentage for the text display (can go over 100%)
+  // Calculate actual percentage for the text display (can exceed 100%)
   const displayPercentage = budgetData?.budgetAmount
     ? (budgetData.spent / budgetData.budgetAmount) * 100
     : 0;
