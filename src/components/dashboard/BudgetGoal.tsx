@@ -2,14 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { format, startOfMonth, endOfMonth, parseISO } from "date-fns";
 
 interface BudgetGoalProps {
   dateRange: { start: string; end: string };
 }
 
 export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
-  const selectedDate = new Date(dateRange.start);
+  // FIX: Use parseISO to correctly handle the date string in local time.
+  // This prevents "2024-11-01" from shifting back to "2024-10-31" due to timezone offsets.
+  const selectedDate = parseISO(dateRange.start);
   const currentMonthYear = format(selectedDate, "yyyy-MM");
 
   const { data: budgetData } = useQuery({
@@ -21,6 +23,7 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
         return { budgetAmount: 0, spent: 0 };
       }
 
+      // Fetch the goal specifically for the selected month
       const { data: budget } = await supabase
         .from("budget_goals")
         .select("*")
@@ -28,7 +31,7 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Calculate correct start and end of the selected month
+      // Calculate the full date range for the selected month to aggregate total expenses
       const monthStart = startOfMonth(selectedDate);
       const monthEnd = endOfMonth(selectedDate);
 
@@ -49,7 +52,13 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
     },
   });
 
+  // Calculate percentage, capping visual progress at 100%
   const percentage = budgetData?.budgetAmount
+    ? Math.min((budgetData.spent / budgetData.budgetAmount) * 100, 100)
+    : 0;
+
+  // Calculate raw percentage for the text display (can go over 100%)
+  const displayPercentage = budgetData?.budgetAmount
     ? (budgetData.spent / budgetData.budgetAmount) * 100
     : 0;
 
@@ -65,7 +74,7 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
         </div>
         <Progress value={percentage} className="h-2" />
         <p className="text-xs text-muted-foreground text-center">
-          {percentage.toFixed(1)}% of monthly budget used
+          {displayPercentage.toFixed(1)}% of monthly budget used
         </p>
       </CardContent>
     </Card>
