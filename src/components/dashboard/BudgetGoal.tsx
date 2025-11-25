@@ -67,7 +67,7 @@ export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
     <Card>
       <CardHeader>
         <CardTitle>
-          Monthly Budget Goal ({format(selectedDate, "MMMM yyyy")})
+          Monthly Budget Goal 
         </CardTitle>
       </CardHeader>
 
