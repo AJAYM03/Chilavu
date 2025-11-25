@@ -2,11 +2,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 
-export const BudgetGoal = () => {
-  const currentDate = new Date();
-  const currentMonthYear = format(currentDate, "yyyy-MM");
+interface BudgetGoalProps {
+  dateRange: { start: string; end: string };
+}
+
+export const BudgetGoal = ({ dateRange }: BudgetGoalProps) => {
+  const selectedDate = new Date(dateRange.start);
+  const currentMonthYear = format(selectedDate, "yyyy-MM");
 
   const { data: budgetData } = useQuery({
     queryKey: ["budget-goal", currentMonthYear],
@@ -24,17 +28,17 @@ export const BudgetGoal = () => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      // Calculate correct start and end of month
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      // Calculate correct start and end of the selected month
+      const monthStart = startOfMonth(selectedDate);
+      const monthEnd = endOfMonth(selectedDate);
 
       const { data: expenses } = await supabase
         .from("expenses")
         .select("amount")
         .eq("user_id", user.id)
         .eq("is_income", false)
-        .gte("date", format(startOfMonth, "yyyy-MM-dd"))
-        .lte("date", format(endOfMonth, "yyyy-MM-dd"));
+        .gte("date", format(monthStart, "yyyy-MM-dd"))
+        .lte("date", format(monthEnd, "yyyy-MM-dd"));
 
       const totalSpent = expenses?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
 
@@ -52,7 +56,7 @@ export const BudgetGoal = () => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Budget Goal</CardTitle>
+        <CardTitle>Monthly Budget Goal ({format(selectedDate, "MMMM yyyy")})</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-between text-sm">
