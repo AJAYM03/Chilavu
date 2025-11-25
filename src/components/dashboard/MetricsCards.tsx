@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown, DollarSign, Zap } from "lucide-react";
+import { differenceInDays } from "date-fns";
 
 interface MetricsCardsProps {
   dateRange: { start: string; end: string };
@@ -33,11 +34,15 @@ export const MetricsCards = ({ dateRange }: MetricsCardsProps) => {
 
       const expenseCount = expenses.filter((e) => !e.is_income).length;
 
+      // Fix: Calculate days in range for correct "Daily Average"
+      const daysInRange = Math.max(1, differenceInDays(new Date(dateRange.end), new Date(dateRange.start)) + 1);
+      const avgDailySpend = totalSpent / daysInRange;
+
       return {
         totalSpent,
         totalIncome,
         netBalance: totalIncome - totalSpent,
-        avgDailySpend: totalSpent / Math.max(1, expenseCount),
+        avgDailySpend,
         expenseCount,
         impulseSpending,
       };

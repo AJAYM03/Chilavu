@@ -57,18 +57,36 @@ const Categories = () => {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const { error } = await supabase
+    mutationFn: async ({ id, name, oldName }: { id: string; name: string; oldName: string }) => {
+      // 1. Update the category name definition
+      const { error: catError } = await supabase
         .from("user_categories")
         .update({ name })
         .eq("id", id);
-      if (error) throw error;
+      if (catError) throw catError;
+
+      // 2. Update all expenses using the old category name
+      const { error: expError } = await supabase
+        .from("expenses")
+        .update({ category_name: name })
+        .eq("category_name", oldName);
+      if (expError) throw expError;
+
+      // 3. Update category budgets
+      const { error: budgetError } = await supabase
+        .from("category_budgets")
+        .update({ category_name: name })
+        .eq("category_name", oldName);
+      if (budgetError) throw budgetError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user-categories"] });
-      toast.success("Category updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["category-budgets"] });
+      toast.success("Category and related records updated successfully");
       setEditingCategory(null);
       setCategoryName("");
+      setIsAddDialogOpen(false);
     },
     onError: () => {
       toast.error("Failed to update category");
@@ -98,7 +116,11 @@ const Categories = () => {
     if (!categoryName.trim()) return;
 
     if (editingCategory) {
-      updateMutation.mutate({ id: editingCategory.id, name: categoryName });
+      updateMutation.mutate({ 
+        id: editingCategory.id, 
+        name: categoryName,
+        oldName: editingCategory.name 
+      });
     } else {
       addMutation.mutate(categoryName);
     }
