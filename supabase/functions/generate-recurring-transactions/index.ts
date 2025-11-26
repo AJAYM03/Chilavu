@@ -14,7 +14,7 @@ serve(async (req) => {
   try {
     // Authentication: Verify the request is authorized
     const authHeader = req.headers.get("authorization");
-    const cronSecret = Deno.env.get("CRON_SECRET");
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!authHeader) {
       console.error("Missing authorization header");
@@ -24,11 +24,11 @@ serve(async (req) => {
       );
     }
 
-    // Allow either JWT token (for admin users) or cron secret (for scheduled jobs)
+    // Allow either JWT token (for admin users) or service role key (for scheduled jobs)
     const token = authHeader.replace("Bearer ", "");
     
-    // Check if it's the cron secret
-    const isCronJob = cronSecret && token === cronSecret;
+    // Check if it's the service role key (for cron jobs)
+    const isCronJob = serviceRoleKey && token === serviceRoleKey;
     
     if (!isCronJob) {
       // Verify JWT token for authenticated users
@@ -48,7 +48,7 @@ serve(async (req) => {
       
       console.log(`Authenticated user ${user.id} triggered recurring transactions`);
     } else {
-      console.log("Cron job authenticated via secret");
+      console.log("Cron job authenticated via service role key");
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
