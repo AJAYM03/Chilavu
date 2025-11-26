@@ -12,6 +12,45 @@ serve(async (req) => {
   }
 
   try {
+    // Authentication: Verify the request is authorized
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = Deno.env.get("CRON_SECRET");
+    
+    if (!authHeader) {
+      console.error("Missing authorization header");
+      return new Response(
+        JSON.stringify({ success: false, error: "Authentication required" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Allow either JWT token (for admin users) or cron secret (for scheduled jobs)
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Check if it's the cron secret
+    const isCronJob = cronSecret && token === cronSecret;
+    
+    if (!isCronJob) {
+      // Verify JWT token for authenticated users
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+      const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+      
+      const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+      
+      if (userError || !user) {
+        console.error("Invalid authentication token:", userError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid authentication" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
+      console.log(`Authenticated user ${user.id} triggered recurring transactions`);
+    } else {
+      console.log("Cron job authenticated via secret");
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
