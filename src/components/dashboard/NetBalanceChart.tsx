@@ -81,79 +81,89 @@ export const NetBalanceChart = ({ dateRange, period }: NetBalanceChartProps) => 
   const balanceChange = currentBalance - startBalance;
 
   return (
-    <Card className="animate-fade-in shadow-lg hover:shadow-2xl transition-all duration-300 border-muted/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Net Balance Trend
-        </CardTitle>
-        <CardDescription className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
-          <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Current:</span>
+    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-2xl font-bold">Net Balance Trend</CardTitle>
+        <CardDescription className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
+          <span className="flex items-center gap-2">
+            <span className="text-sm">Current Balance:</span>
             <span className={`font-bold text-xl ${currentBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
               ₹{currentBalance.toFixed(2)}
             </span>
           </span>
-          <span className="flex items-center gap-1.5">
-            <span className="text-muted-foreground">Change:</span>
-            <span className={`font-bold ${balanceChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+          <span className="flex items-center gap-2">
+            <span className="text-sm">Period Change:</span>
+            <span className={`font-bold text-lg ${balanceChange >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
               {balanceChange >= 0 ? '↗' : '↘'} {balanceChange >= 0 ? '+' : ''}₹{balanceChange.toFixed(2)}
             </span>
           </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-0">
         {hasData ? (
-          <ResponsiveContainer width="100%" height={380}>
-            <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <ResponsiveContainer width="100%" height={400}>
+            <LineChart data={data} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="50%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                 </linearGradient>
                 <filter id="balanceShadow" height="150%">
-                  <feDropShadow dx="0" dy="3" stdDeviation="4" floodOpacity="0.25"/>
+                  <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.2"/>
                 </filter>
               </defs>
               <CartesianGrid 
-                strokeDasharray="5 5" 
-                className="stroke-muted" 
-                opacity={0.4}
+                strokeDasharray="3 3" 
+                stroke="hsl(var(--border))" 
+                opacity={0.3}
                 vertical={false}
               />
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 13, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 2 }}
+                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 1.5 }}
+                dy={10}
               />
               <YAxis 
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 13, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 2 }}
+                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 1.5 }}
                 tickFormatter={(value) => `₹${value}`}
+                dx={-5}
               />
               <Tooltip 
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "2px solid hsl(var(--primary))",
-                  borderRadius: "calc(var(--radius) + 2px)",
-                  boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.2)",
-                  padding: "12px"
+                  backgroundColor: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  padding: "12px 16px",
+                  color: "hsl(var(--popover-foreground))"
                 }}
-                formatter={(value: number) => [`₹${value.toFixed(2)}`, "Net Balance"]}
-                labelStyle={{ fontWeight: 600, marginBottom: "4px" }}
+                formatter={(value: number) => [`₹${value.toFixed(2)}`, "Balance"]}
+                labelStyle={{ 
+                  fontWeight: 700,
+                  fontSize: "14px",
+                  marginBottom: "6px",
+                  color: "hsl(var(--popover-foreground))"
+                }}
+                itemStyle={{
+                  color: "hsl(var(--popover-foreground))",
+                  fontSize: "14px",
+                  fontWeight: 600
+                }}
               />
               <ReferenceLine 
                 y={0} 
                 stroke="hsl(var(--muted-foreground))" 
-                strokeDasharray="8 4"
-                strokeWidth={2}
+                strokeDasharray="5 5"
+                strokeWidth={1.5}
                 label={{ 
                   value: "Break Even", 
-                  position: "right", 
+                  position: "insideTopRight", 
                   fill: "hsl(var(--muted-foreground))",
-                  fontSize: 12,
+                  fontSize: 13,
                   fontWeight: 600
                 }}
               />
@@ -161,18 +171,16 @@ export const NetBalanceChart = ({ dateRange, period }: NetBalanceChartProps) => 
                 type="monotone" 
                 dataKey="balance" 
                 stroke="hsl(var(--primary))" 
-                strokeWidth={4}
+                strokeWidth={3}
                 fill="url(#balanceGradient)"
                 dot={{ 
                   fill: "hsl(var(--primary))", 
-                  r: 6, 
-                  strokeWidth: 3, 
-                  stroke: "hsl(var(--background))",
-                  filter: "url(#balanceShadow)"
+                  r: 5, 
+                  strokeWidth: 2, 
+                  stroke: "hsl(var(--background))"
                 }}
-                activeDot={{ r: 8, strokeWidth: 3 }}
-                animationDuration={1200}
-                animationEasing="ease-in-out"
+                activeDot={{ r: 7, strokeWidth: 2 }}
+                animationDuration={800}
                 filter="url(#balanceShadow)"
               />
             </LineChart>
@@ -181,7 +189,7 @@ export const NetBalanceChart = ({ dateRange, period }: NetBalanceChartProps) => 
           <EmptyState
             icon={Wallet}
             title="No balance data"
-            description="Your net balance trend will appear here as you add transactions"
+            description="Your net balance trend will appear as you add transactions"
           />
         )}
       </CardContent>
