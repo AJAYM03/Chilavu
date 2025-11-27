@@ -47,88 +47,101 @@ export const SpendingChart = ({ dateRange }: SpendingChartProps) => {
   const totalSpending = chartData?.reduce((sum, item) => sum + item.value, 0) || 0;
 
   return (
-    <Card className="animate-fade-in shadow-lg hover:shadow-2xl transition-all duration-300 border-muted/50">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-          Spending Breakdown
-        </CardTitle>
-        <CardDescription className="flex items-center gap-2 text-base">
-          <span className="text-muted-foreground">Total Spending:</span>
-          <span className="text-2xl font-bold text-primary drop-shadow-sm">₹{totalSpending.toFixed(2)}</span>
+    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
+      <CardHeader className="space-y-1 pb-4">
+        <CardTitle className="text-2xl font-bold">Spending Breakdown</CardTitle>
+        <CardDescription className="flex items-center gap-2 text-base pt-1">
+          <span>Total Spending:</span>
+          <span className="text-2xl font-bold text-foreground">₹{totalSpending.toFixed(2)}</span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="pt-2">
+      <CardContent className="pt-0">
         {chartData && chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={380}>
+          <ResponsiveContainer width="100%" height={400}>
             <PieChart>
-              <defs>
-                {COLORS.map((color, index) => (
-                  <filter key={`shadow-${index}`} id={`shadow-${index}`} height="200%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.3"/>
-                  </filter>
-                ))}
-              </defs>
               <Pie
                 data={chartData}
                 cx="50%"
                 cy="50%"
-                labelLine={{
-                  stroke: "hsl(var(--muted-foreground))",
-                  strokeWidth: 2,
-                  strokeDasharray: "3 3",
+                labelLine={false}
+                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
+                  const RADIAN = Math.PI / 180;
+                  const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
+                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                  if (percent < 0.05) return null;
+
+                  return (
+                    <text
+                      x={x}
+                      y={y}
+                      fill="hsl(var(--foreground))"
+                      textAnchor={x > cx ? "start" : "end"}
+                      dominantBaseline="central"
+                      className="text-sm font-semibold"
+                    >
+                      {`${(percent * 100).toFixed(0)}%`}
+                    </text>
+                  );
                 }}
-                label={({ name, percent, value }) => 
-                  `${name}\n₹${value.toFixed(0)}\n(${(percent * 100).toFixed(1)}%)`
-                }
-                outerRadius={110}
-                innerRadius={70}
-                fill="#8884d8"
+                outerRadius={120}
+                innerRadius={75}
                 dataKey="value"
                 animationBegin={0}
-                animationDuration={1000}
-                animationEasing="ease-out"
-                paddingAngle={2}
+                animationDuration={800}
+                paddingAngle={3}
               >
                 {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
                     fill={COLORS[index % COLORS.length]}
-                    className="hover:opacity-90 transition-all duration-200 cursor-pointer drop-shadow-md"
-                    strokeWidth={2}
+                    className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
+                    strokeWidth={3}
                     stroke="hsl(var(--background))"
                   />
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Spent']}
+                formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
                 contentStyle={{ 
-                  backgroundColor: "hsl(var(--card))",
-                  border: "2px solid hsl(var(--border))",
-                  borderRadius: "calc(var(--radius) + 2px)",
-                  boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.2)",
-                  padding: "12px"
+                  backgroundColor: "hsl(var(--popover))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "var(--radius)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                  padding: "12px 16px",
+                  color: "hsl(var(--popover-foreground))"
                 }}
                 labelStyle={{ 
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  fontSize: "15px",
+                  marginBottom: "6px",
+                  color: "hsl(var(--popover-foreground))"
+                }}
+                itemStyle={{
+                  color: "hsl(var(--popover-foreground))",
                   fontSize: "14px",
-                  marginBottom: "4px"
+                  padding: "4px 0"
                 }}
               />
               <Legend 
                 wrapperStyle={{ 
-                  paddingTop: "24px",
-                  fontSize: "13px"
+                  paddingTop: "28px",
+                  fontSize: "14px"
                 }}
                 iconType="circle"
-                iconSize={12}
+                iconSize={10}
+                formatter={(value) => <span className="text-foreground font-medium">{value}</span>}
               />
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-[380px] text-muted-foreground gap-3">
-            <div className="text-5xl opacity-20">📊</div>
-            <p className="font-medium">No expenses in this period</p>
-            <p className="text-sm">Start adding expenses to see your breakdown</p>
+          <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground gap-4">
+            <div className="text-6xl opacity-30">📊</div>
+            <div className="text-center space-y-2">
+              <p className="font-semibold text-lg text-foreground">No expenses yet</p>
+              <p className="text-sm">Add your first expense to see the breakdown</p>
+            </div>
           </div>
         )}
       </CardContent>

@@ -62,33 +62,37 @@ export const CategoryBudgetChart = ({ dateRange }: CategoryBudgetChartProps) => 
 
   return (
     <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader>
-        <CardTitle>Category Budget Progress</CardTitle>
-        <CardDescription>Track your spending against set budgets</CardDescription>
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold">Budget Progress</CardTitle>
+        <CardDescription>Track spending against your budgets</CardDescription>
       </CardHeader>
       <CardContent>
         {hasData ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             {data.map((item, index) => (
               <div 
                 key={item.category} 
-                className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors animate-fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className="space-y-3 p-5 rounded-lg bg-muted/40 hover:bg-muted/60 transition-colors animate-fade-in border border-border/50"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-base">{item.category}</span>
-                  <span className={`text-sm font-medium ${item.isOver ? "text-destructive" : "text-muted-foreground"}`}>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-bold text-base text-foreground">{item.category}</span>
+                  <span className={`text-sm font-bold whitespace-nowrap ${item.isOver ? "text-destructive" : "text-foreground"}`}>
                     ₹{item.spent.toFixed(2)} / ₹{item.budget.toFixed(2)}
                   </span>
                 </div>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{item.percentage.toFixed(1)}% used</span>
-                    <span>₹{(item.budget - item.spent).toFixed(2)} remaining</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className={item.percentage > 80 ? "text-foreground font-bold" : "text-muted-foreground"}>
+                      {item.percentage.toFixed(1)}% used
+                    </span>
+                    <span className="text-muted-foreground">
+                      ₹{Math.max(0, item.budget - item.spent).toFixed(2)} left
+                    </span>
                   </div>
                   <Progress 
                     value={item.percentage} 
-                    className={`h-3 ${
+                    className={`h-3.5 ${
                       item.isOver 
                         ? "[&>div]:bg-destructive" 
                         : item.percentage > 80 
@@ -98,13 +102,13 @@ export const CategoryBudgetChart = ({ dateRange }: CategoryBudgetChartProps) => 
                   />
                 </div>
                 {item.isOver && (
-                  <div className="flex items-center gap-2 text-xs text-destructive bg-destructive/10 p-2 rounded">
-                    <span className="font-semibold">⚠️ Over budget by ₹{(item.spent - item.budget).toFixed(2)}</span>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-destructive bg-destructive/15 p-3 rounded-md">
+                    <span>⚠️ Over budget by ₹{(item.spent - item.budget).toFixed(2)}</span>
                   </div>
                 )}
                 {!item.isOver && item.percentage > 90 && (
-                  <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 p-2 rounded">
-                    <span className="font-semibold">⚡ Approaching limit!</span>
+                  <div className="flex items-center gap-2 text-sm font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/15 p-3 rounded-md">
+                    <span>⚡ Approaching limit - {(100 - item.percentage).toFixed(0)}% remaining</span>
                   </div>
                 )}
               </div>
