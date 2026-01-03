@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { format, parseISO } from "date-fns";
-import { Pencil, Trash2, Search, Download, Receipt } from "lucide-react";
+import { Pencil, Trash2, Search, Download, Receipt, Zap, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { EditExpenseDialog } from "./EditExpenseDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -41,29 +41,15 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
     },
     onSuccess: () => {
       const keysToInvalidate = [
-        "expenses",
-        "metrics",
-        "spending-chart",
-        "spending-trend",
-        "expenses-trend",
-        "expenses-balance",
-        "expenses-impulse",
-        "expenses-by-category",
-        "category-budgets-chart",
-        "budget-goal",
-        "top-categories"
+        "expenses", "metrics", "spending-chart", "spending-trend",
+        "expenses-trend", "expenses-balance", "expenses-impulse",
+        "expenses-by-category", "category-budgets-chart", "budget-goal", "top-categories"
       ];
-      
-      keysToInvalidate.forEach(key => {
-        queryClient.invalidateQueries({ queryKey: [key] });
-      });
-      
-      toast.success("Expense deleted successfully");
+      keysToInvalidate.forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
+      toast.success("Transaction deleted");
       setDeletingExpenseId(null);
     },
-    onError: () => {
-      toast.error("Failed to delete expense");
-    },
+    onError: () => toast.error("Failed to delete"),
   });
 
   const filteredExpenses = expenses?.filter((expense) =>
@@ -79,13 +65,8 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
 
     const headers = ["Date", "Title", "Amount", "Type", "Category", "Impulse", "Split With"];
     const rows = filteredExpenses.map((e) => [
-      e.date,
-      e.title,
-      e.amount,
-      e.is_income ? "Income" : "Expense",
-      e.category_name || "",
-      e.is_impulse ? "Yes" : "No",
-      e.split_with || "",
+      e.date, e.title, e.amount, e.is_income ? "Income" : "Expense",
+      e.category_name || "", e.is_impulse ? "Yes" : "No", e.split_with || "",
     ]);
 
     const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
@@ -93,7 +74,7 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `expenses-${dateRange.start}-${dateRange.end}.csv`;
+    a.download = `chilavu-${dateRange.start}-to-${dateRange.end}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
     toast.success("Exported to CSV");
@@ -102,76 +83,71 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle>Transactions</CardTitle>
-            <Button variant="outline" size="sm" onClick={exportToCSV}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
+            <CardTitle className="text-base font-semibold">Transactions</CardTitle>
+            <Button variant="ghost" size="sm" onClick={exportToCSV} className="text-muted-foreground">
+              <Download className="h-4 w-4 mr-1.5" />
+              Export
             </Button>
           </div>
-          <div className="relative mt-4">
+          <div className="relative mt-3">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search transactions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-9 h-9 text-sm"
             />
           </div>
         </CardHeader>
         <CardContent>
           {filteredExpenses && filteredExpenses.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-2">
               {filteredExpenses.map((expense) => (
                 <div
                   key={expense.id}
-                  className="flex items-center justify-between p-4 border rounded-lg transition-all hover:shadow-md hover:border-primary/50"
+                  className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors group"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{expense.title}</h3>
+                      <h3 className="font-medium text-sm text-foreground truncate">{expense.title}</h3>
                       {expense.is_impulse && (
-                        <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded animate-pulse">
-                          Impulse
-                        </span>
+                        <Zap className="h-3.5 w-3.5 text-warning shrink-0" />
                       )}
                       {expense.is_recurring && (
-                        <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
-                          Recurring
-                        </span>
+                        <RefreshCw className="h-3.5 w-3.5 text-primary shrink-0" />
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
-                      <span>{format(parseISO(expense.date), "MMM dd, yyyy")}</span>
-                      {expense.category_name && <span className="font-medium">{expense.category_name}</span>}
-                      {expense.split_with && <span>Split with: {expense.split_with}</span>}
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                      <span>{format(parseISO(expense.date), "MMM d")}</span>
+                      {expense.category_name && (
+                        <span className="px-1.5 py-0.5 bg-muted rounded text-xs">{expense.category_name}</span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span
-                      className={`font-bold text-lg ${
-                        expense.is_income ? "text-accent" : "text-destructive"
-                      }`}
-                    >
-                      {expense.is_income ? "+" : "-"}₹{Number(expense.amount).toFixed(2)}
+                  <div className="flex items-center gap-2">
+                    <span className={`font-semibold text-sm ${expense.is_income ? "text-accent" : "text-foreground"}`}>
+                      {expense.is_income ? "+" : "-"}₹{Number(expense.amount).toFixed(0)}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="hover:bg-primary/10"
-                      onClick={() => setEditingExpense(expense)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="hover:bg-destructive/10"
-                      onClick={() => setDeletingExpenseId(expense.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setEditingExpense(expense)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => setDeletingExpenseId(expense.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -179,8 +155,8 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
           ) : (
             <EmptyState
               icon={Receipt}
-              title={searchTerm ? "No matching transactions" : "No transactions yet"}
-              description={searchTerm ? "Try adjusting your search term" : "Start tracking your expenses and income"}
+              title={searchTerm ? "No matches found" : "No transactions yet"}
+              description={searchTerm ? "Try a different search term" : "Start by adding your first expense or income"}
             />
           )}
         </CardContent>
@@ -197,14 +173,17 @@ export const ExpenseList = ({ dateRange }: ExpenseListProps) => {
       <AlertDialog open={!!deletingExpenseId} onOpenChange={() => setDeletingExpenseId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
+            <AlertDialogTitle>Delete transaction?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this transaction? This action cannot be undone.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => deletingExpenseId && deleteMutation.mutate(deletingExpenseId)}>
+            <AlertDialogAction 
+              onClick={() => deletingExpenseId && deleteMutation.mutate(deletingExpenseId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

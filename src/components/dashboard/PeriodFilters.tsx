@@ -16,20 +16,24 @@ interface PeriodFiltersProps {
 
 export const PeriodFilters = ({ period, setPeriod, selectedDate, setSelectedDate }: PeriodFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
       <Tabs value={period} onValueChange={(v) => setPeriod(v as PeriodType)}>
-        <TabsList>
-          <TabsTrigger value="daily">Daily</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
+        <TabsList className="h-9 bg-muted/50">
+          <TabsTrigger value="daily" className="text-sm px-4">Day</TabsTrigger>
+          <TabsTrigger value="weekly" className="text-sm px-4">Week</TabsTrigger>
+          <TabsTrigger value="monthly" className="text-sm px-4">Month</TabsTrigger>
         </TabsList>
       </Tabs>
 
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className={cn("justify-start text-left font-normal")}>
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {format(selectedDate, "PPP")}
+          <Button 
+            variant="outline" 
+            size="sm"
+            className={cn("justify-start text-left font-normal h-9 text-sm")}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+            {format(selectedDate, "MMM d, yyyy")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">

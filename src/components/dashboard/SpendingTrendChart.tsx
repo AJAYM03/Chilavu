@@ -1,16 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { format, parseISO } from "date-fns";
 import { PeriodType } from "@/pages/Dashboard";
+import { BarChart3 } from "lucide-react";
 
 interface SpendingTrendChartProps {
   dateRange: { start: string; end: string };
   period: PeriodType;
 }
 
-export const SpendingTrendChart = ({ dateRange, period }: SpendingTrendChartProps) => {
+export const SpendingTrendChart = ({ dateRange }: SpendingTrendChartProps) => {
   const { data: trendData } = useQuery({
     queryKey: ["spending-trend", dateRange],
     queryFn: async () => {
@@ -31,106 +32,75 @@ export const SpendingTrendChart = ({ dateRange, period }: SpendingTrendChartProp
       });
 
       return Object.entries(dailyTotals).map(([date, amount]) => ({
-        date: format(parseISO(date), "MMM dd"),
+        date: format(parseISO(date), "dd"),
+        fullDate: format(parseISO(date), "MMM dd"),
         amount,
       }));
     },
   });
 
-  const maxAmount = trendData ? Math.max(...trendData.map(d => d.amount)) : 0;
-  const avgAmount = trendData ? trendData.reduce((sum, d) => sum + d.amount, 0) / trendData.length : 0;
+  const avgAmount = trendData && trendData.length > 0 
+    ? trendData.reduce((sum, d) => sum + d.amount, 0) / trendData.length 
+    : 0;
+
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      return (
+        <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-sm">
+          <p className="font-medium text-sm text-foreground">{data.fullDate}</p>
+          <p className="text-sm text-muted-foreground">₹{data.amount.toFixed(0)} spent</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
-    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle className="text-2xl font-bold">Daily Spending Trend</CardTitle>
-        <CardDescription className="flex flex-wrap gap-x-6 gap-y-2 pt-1">
-          <span className="flex items-center gap-2">
-            <span className="text-sm">Daily Average:</span>
-            <span className="font-bold text-foreground text-lg">₹{avgAmount.toFixed(2)}</span>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Daily spending</CardTitle>
+          <span className="text-sm text-muted-foreground">
+            Avg: <span className="font-medium text-foreground">₹{avgAmount.toFixed(0)}</span>/day
           </span>
-          <span className="flex items-center gap-2">
-            <span className="text-sm">Peak Day:</span>
-            <span className="font-bold text-foreground text-lg">₹{maxAmount.toFixed(2)}</span>
-          </span>
-        </CardDescription>
+        </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent>
         {trendData && trendData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={trendData} margin={{ top: 20, right: 20, left: 10, bottom: 5 }}>
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.9} />
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid 
-                strokeDasharray="3 3" 
-                stroke="hsl(var(--border))" 
-                opacity={0.3}
-                vertical={false}
-              />
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={trendData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <XAxis 
                 dataKey="date" 
-                tick={{ fontSize: 13, fill: "hsl(var(--foreground))", fontWeight: 500 }}
+                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 1.5 }}
-                dy={10}
+                axisLine={false}
               />
               <YAxis 
-                tick={{ fontSize: 13, fill: "hsl(var(--foreground))", fontWeight: 500 }}
+                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))", strokeWidth: 1.5 }}
+                axisLine={false}
                 tickFormatter={(value) => `₹${value}`}
-                dx={-5}
+                width={50}
               />
-              <Tooltip 
-                formatter={(value: number) => [`₹${value.toFixed(2)}`, "Spent"]}
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  padding: "12px 16px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                cursor={{ fill: "hsl(var(--accent))", opacity: 0.1 }}
-                labelStyle={{ 
-                  fontWeight: 700, 
-                  marginBottom: "6px",
-                  fontSize: "14px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                itemStyle={{
-                  color: "hsl(var(--popover-foreground))",
-                  fontSize: "14px",
-                  fontWeight: 600
-                }}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "hsl(var(--muted))", opacity: 0.3 }} />
               <Bar 
                 dataKey="amount" 
-                fill="url(#barGradient)" 
-                radius={[8, 8, 0, 0]}
-                animationDuration={800}
-                maxBarSize={50}
-              >
-                {trendData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`}
-                    className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
-                  />
-                ))}
-              </Bar>
+                fill="hsl(var(--primary))" 
+                radius={[4, 4, 0, 0]}
+                maxBarSize={32}
+              />
             </BarChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground gap-4">
-            <div className="text-6xl opacity-30">📈</div>
-            <div className="text-center space-y-2">
-              <p className="font-semibold text-lg text-foreground">No spending data</p>
-              <p className="text-sm">Your daily spending trends will appear here</p>
+          <div className="flex flex-col items-center justify-center h-[220px] text-center">
+            <div className="p-4 rounded-full bg-muted mb-3">
+              <BarChart3 className="h-8 w-8 text-muted-foreground" />
             </div>
+            <p className="font-medium text-foreground">No spending data</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Your daily trends will appear here
+            </p>
           </div>
         )}
       </CardContent>

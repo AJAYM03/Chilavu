@@ -1,9 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pie, PieChart, ResponsiveContainer, Cell, Legend, Tooltip } from "recharts";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Zap } from "lucide-react";
+import { Zap, CheckCircle } from "lucide-react";
 
 interface ImpulseSpendingChartProps {
   dateRange: { start: string; end: string };
@@ -23,133 +21,90 @@ export const ImpulseSpendingChart = ({ dateRange }: ImpulseSpendingChartProps) =
     },
   });
 
-  const chartData = () => {
-    if (!expenses || expenses.length === 0) return [];
+  const impulseTotal = expenses?.filter(e => e.is_impulse).reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+  const plannedTotal = expenses?.filter(e => !e.is_impulse).reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+  const total = impulseTotal + plannedTotal;
+  const impulsePercent = total > 0 ? (impulseTotal / total) * 100 : 0;
+  const plannedPercent = 100 - impulsePercent;
 
-    const impulseTotal = expenses
-      .filter((e) => e.is_impulse)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
-    
-    const plannedTotal = expenses
-      .filter((e) => !e.is_impulse)
-      .reduce((sum, e) => sum + Number(e.amount), 0);
+  const hasData = total > 0;
 
-    if (impulseTotal === 0 && plannedTotal === 0) return [];
-
-    return [
-      { name: "Planned", value: plannedTotal, color: "hsl(var(--primary))" },
-      { name: "Impulse", value: impulseTotal, color: "hsl(var(--destructive))" },
-    ];
+  // Determine status
+  const getStatus = () => {
+    if (impulsePercent <= 10) return { label: "Excellent", color: "text-accent", icon: CheckCircle };
+    if (impulsePercent <= 20) return { label: "Good", color: "text-accent", icon: CheckCircle };
+    if (impulsePercent <= 30) return { label: "Okay", color: "text-warning", icon: Zap };
+    return { label: "High", color: "text-destructive", icon: Zap };
   };
 
-  const data = chartData();
-  const hasData = data.length > 0;
-
-  const impulsePercent = data.length > 0 && data[1] ? (data[1].value / (data[0].value + data[1].value)) * 100 : 0;
+  const status = getStatus();
+  const StatusIcon = status.icon;
 
   return (
-    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle className="text-2xl font-bold">Impulse vs Planned</CardTitle>
-        <CardDescription className="flex items-center gap-2 pt-1">
-          {impulsePercent > 0 ? (
-            <>
-              <span className={`font-bold text-xl ${impulsePercent > 30 ? "text-destructive" : impulsePercent > 20 ? "text-amber-500" : "text-green-600 dark:text-green-400"}`}>
-                {impulsePercent.toFixed(1)}%
-              </span>
-              <span>impulse spending</span>
-              {impulsePercent > 30 && <span className="text-xl">⚠️</span>}
-              {impulsePercent <= 10 && <span className="text-xl">✨</span>}
-            </>
-          ) : (
-            <span>Track your impulse purchases</span>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Impulse spending</CardTitle>
+          {hasData && (
+            <div className={`flex items-center gap-1.5 text-sm ${status.color}`}>
+              <StatusIcon className="h-4 w-4" />
+              <span className="font-medium">{status.label}</span>
+            </div>
           )}
-        </CardDescription>
+        </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent>
         {hasData ? (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
-                  const RADIAN = Math.PI / 180;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+          <div className="space-y-4">
+            {/* Visual bar */}
+            <div className="h-4 rounded-full bg-muted overflow-hidden flex">
+              <div 
+                className="h-full bg-primary transition-all duration-500"
+                style={{ width: `${plannedPercent}%` }}
+              />
+              <div 
+                className="h-full bg-destructive transition-all duration-500"
+                style={{ width: `${impulsePercent}%` }}
+              />
+            </div>
 
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="hsl(var(--foreground))"
-                      textAnchor={x > cx ? "start" : "end"}
-                      dominantBaseline="central"
-                      className="text-sm font-semibold"
-                    >
-                      {`${name}: ${(percent * 100).toFixed(0)}%`}
-                    </text>
-                  );
-                }}
-                outerRadius={120}
-                innerRadius={75}
-                dataKey="value"
-                animationBegin={0}
-                animationDuration={800}
-                paddingAngle={3}
-              >
-                {data.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color}
-                    className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
-                    strokeWidth={3}
-                    stroke="hsl(var(--background))"
-                  />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  padding: "12px 16px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                labelStyle={{ 
-                  fontWeight: 700,
-                  fontSize: "15px",
-                  marginBottom: "6px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                itemStyle={{
-                  color: "hsl(var(--popover-foreground))",
-                  fontSize: "14px",
-                  padding: "4px 0"
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ 
-                  paddingTop: "28px",
-                  fontSize: "14px"
-                }}
-                iconType="circle"
-                iconSize={10}
-                formatter={(value) => <span className="text-foreground font-medium">{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+            {/* Legend */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  <span className="text-sm text-muted-foreground">Planned</span>
+                </div>
+                <p className="text-lg font-semibold text-foreground">₹{plannedTotal.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground">{plannedPercent.toFixed(0)}% of spending</p>
+              </div>
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2.5 h-2.5 rounded-full bg-destructive" />
+                  <span className="text-sm text-muted-foreground">Impulse</span>
+                </div>
+                <p className="text-lg font-semibold text-destructive">₹{impulseTotal.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground">{impulsePercent.toFixed(0)}% of spending</p>
+              </div>
+            </div>
+
+            {/* Tip */}
+            {impulsePercent > 20 && (
+              <p className="text-xs text-muted-foreground text-center py-2 px-3 bg-muted/50 rounded-lg">
+                💡 Try the 24-hour rule: wait a day before impulse purchases
+              </p>
+            )}
+          </div>
         ) : (
-          <EmptyState
-            icon={Zap}
-            title="No spending data"
-            description="Mark expenses as impulse purchases to see the breakdown"
-          />
+          <div className="flex flex-col items-center justify-center h-[200px] text-center">
+            <div className="p-4 rounded-full bg-muted mb-3">
+              <Zap className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-foreground">No spending data</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Mark purchases as "impulse" to track them
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
