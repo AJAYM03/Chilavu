@@ -1,7 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { PieChart as PieChartIcon } from "lucide-react";
 
 interface SpendingChartProps {
   dateRange: { start: string; end: string };
@@ -14,8 +15,6 @@ const COLORS = [
   "hsl(var(--chart-4))",
   "hsl(var(--chart-5))",
   "hsl(var(--chart-6))",
-  "hsl(var(--primary))",
-  "hsl(var(--accent))",
 ];
 
 export const SpendingChart = ({ dateRange }: SpendingChartProps) => {
@@ -33,115 +32,92 @@ export const SpendingChart = ({ dateRange }: SpendingChartProps) => {
 
       const categoryTotals: Record<string, number> = {};
       expenses.forEach((expense) => {
-        const category = expense.category_name || "Uncategorized";
+        const category = expense.category_name || "Other";
         categoryTotals[category] = (categoryTotals[category] || 0) + Number(expense.amount);
       });
 
-      return Object.entries(categoryTotals).map(([name, value]) => ({
-        name,
-        value,
-      }));
+      return Object.entries(categoryTotals)
+        .map(([name, value]) => ({ name, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
     },
   });
 
   const totalSpending = chartData?.reduce((sum, item) => sum + item.value, 0) || 0;
 
+  const CustomTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload;
+      const percent = ((data.value / totalSpending) * 100).toFixed(0);
+      return (
+        <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-sm">
+          <p className="font-medium text-sm text-foreground">{data.name}</p>
+          <p className="text-sm text-muted-foreground">
+            ₹{data.value.toFixed(0)} · {percent}%
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Card className="animate-fade-in shadow-lg hover:shadow-xl transition-shadow duration-300">
-      <CardHeader className="space-y-1 pb-4">
-        <CardTitle className="text-2xl font-bold">Spending Breakdown</CardTitle>
-        <CardDescription className="flex items-center gap-2 text-base pt-1">
-          <span>Total Spending:</span>
-          <span className="text-2xl font-bold text-foreground">₹{totalSpending.toFixed(2)}</span>
-        </CardDescription>
+    <Card>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Where money goes</CardTitle>
+          <span className="text-lg font-bold text-foreground">₹{totalSpending.toFixed(0)}</span>
+        </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent>
         {chartData && chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={400}>
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ cx, cy, midAngle, innerRadius, outerRadius, percent }) => {
-                  const RADIAN = Math.PI / 180;
-                  const radius = innerRadius + (outerRadius - innerRadius) * 1.3;
-                  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-                  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-                  if (percent < 0.05) return null;
-
-                  return (
-                    <text
-                      x={x}
-                      y={y}
-                      fill="hsl(var(--foreground))"
-                      textAnchor={x > cx ? "start" : "end"}
-                      dominantBaseline="central"
-                      className="text-sm font-semibold"
-                    >
-                      {`${(percent * 100).toFixed(0)}%`}
-                    </text>
-                  );
-                }}
-                outerRadius={120}
-                innerRadius={75}
-                dataKey="value"
-                animationBegin={0}
-                animationDuration={800}
-                paddingAngle={3}
-              >
-                {chartData.map((entry, index) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={COLORS[index % COLORS.length]}
-                    className="hover:opacity-80 transition-opacity duration-200 cursor-pointer"
-                    strokeWidth={3}
-                    stroke="hsl(var(--background))"
+          <div className="flex flex-col items-center">
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={85}
+                  innerRadius={55}
+                  dataKey="value"
+                  paddingAngle={2}
+                  animationDuration={500}
+                >
+                  {chartData.map((_, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={COLORS[index % COLORS.length]}
+                      strokeWidth={0}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+            
+            {/* Simple legend */}
+            <div className="grid grid-cols-2 gap-x-6 gap-y-2 mt-2 w-full max-w-xs">
+              {chartData.map((item, index) => (
+                <div key={item.name} className="flex items-center gap-2 text-sm">
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full shrink-0" 
+                    style={{ backgroundColor: COLORS[index % COLORS.length] }}
                   />
-                ))}
-              </Pie>
-              <Tooltip 
-                formatter={(value: number, name: string) => [`₹${value.toFixed(2)}`, name]}
-                contentStyle={{ 
-                  backgroundColor: "hsl(var(--popover))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "var(--radius)",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  padding: "12px 16px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                labelStyle={{ 
-                  fontWeight: 700,
-                  fontSize: "15px",
-                  marginBottom: "6px",
-                  color: "hsl(var(--popover-foreground))"
-                }}
-                itemStyle={{
-                  color: "hsl(var(--popover-foreground))",
-                  fontSize: "14px",
-                  padding: "4px 0"
-                }}
-              />
-              <Legend 
-                wrapperStyle={{ 
-                  paddingTop: "28px",
-                  fontSize: "14px"
-                }}
-                iconType="circle"
-                iconSize={10}
-                formatter={(value) => <span className="text-foreground font-medium">{value}</span>}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        ) : (
-          <div className="flex flex-col items-center justify-center h-[400px] text-muted-foreground gap-4">
-            <div className="text-6xl opacity-30">📊</div>
-            <div className="text-center space-y-2">
-              <p className="font-semibold text-lg text-foreground">No expenses yet</p>
-              <p className="text-sm">Add your first expense to see the breakdown</p>
+                  <span className="text-muted-foreground truncate">{item.name}</span>
+                </div>
+              ))}
             </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-[260px] text-center">
+            <div className="p-4 rounded-full bg-muted mb-3">
+              <PieChartIcon className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <p className="font-medium text-foreground">No expenses yet</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Add expenses to see your breakdown
+            </p>
           </div>
         )}
       </CardContent>
